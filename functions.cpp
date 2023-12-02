@@ -22,7 +22,7 @@ using namespace std;
 void clearConsole()
 {
     #ifdef __WIN32__
-       system("cls");
+       system("clear");
     #elif __APPLE__
        system("clear");
     #elif __linux__
@@ -43,11 +43,6 @@ void displayHnefataflLogo()
  ▒ ░▒░ ░░ ░░   ░ ▒░ ░ ░  ░ ░       ▒   ▒▒ ░   ░      ▒   ▒▒ ░ ░     ░ ░ ▒  ░
  ░  ░░ ░   ░   ░ ░    ░    ░ ░     ░   ▒    ░        ░   ▒    ░ ░     ░ ░
  ░  ░  ░         ░    ░  ░             ░  ░              ░  ░           ░  ░)" << endl << endl << endl;
-
-    // some specifications about notation
-    cout << "K: King" << endl;
-    cout << "S: Sword" << endl;
-    cout << "A: Shield" << endl << endl;
 }
 
 bool chooseSizeBoard(BoardSize &aBoardSize)
@@ -129,6 +124,11 @@ void displayBoard(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSi
     const string LITTLEBORDER = "   +---+---+---+---+---+---+---+---+---+---+---+";
     const string BIGBORDER = "   +---+---+---+---+---+---+---+---+---+---+---+---+---+";
 
+    // some specifications about notation
+    cout << endl << "K: King" << endl;
+    cout << "S: Sword" << endl;
+    cout << "A: Shield" << endl << endl;
+
     if (aBoardSize == LITTLE)
     {
         cout << "     1   2   3   4   5   6   7   8   9  10  11" << endl;
@@ -142,14 +142,7 @@ void displayBoard(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSi
     for (int row = 0; row < aBoardSize; row++)
     {
         char letter = 'A' + row;
-        if (row > 8)
-        {
-            cout << letter << " |";
-        }
-        else
-        {
-            cout << letter << "  |";
-        }
+        cout << letter << "  |";
 
         for (int col = 0; col < aBoardSize; col++)
         {
@@ -195,6 +188,7 @@ Position getPositionFromInput()
     string pos, numPosPart;
 
     cin >> pos;
+    cout << endl;
 
     newPosition.itsRow = pos[0];
 
@@ -254,7 +248,7 @@ Position getPositionFromInput()
         newPosition.itsCol = -1;
     }
 
-    cout << "{" << newPosition.itsRow << ", " << newPosition.itsCol << "}" << endl;
+    //cout << "{" << newPosition.itsRow << ", " << newPosition.itsCol << "}" << endl;
 
     return newPosition;
 }
@@ -276,7 +270,6 @@ bool isEmptyCell(const Cell aBoard[][BOARD_SIZE_MAX], const Position& aPos)
         return true;
     else
     {
-        cout << "This cell is not empty !" << endl;
         return false;
     }
 }
@@ -292,15 +285,15 @@ bool isValidMovement(const PlayerRole& aPlayer, const Cell aBoard[][BOARD_SIZE_M
         switch (aBoard[aStartPos.itsRow][aStartPos.itsCol].itsPieceType)
         {
         case NONE: return false; break;
-        case SHIELD: return false; break;
-        case KING: return false; break;
+        case SHIELD: return false; cout << "Ce pion ne vous apartient pas !"; break;
+        case KING: cout << "Ce pion ne vous apartient pas !"; return false; break;
         }
         break;
     case DEFENSE:
         switch (aBoard[aStartPos.itsRow][aStartPos.itsCol].itsPieceType)
         {
             case NONE: return false; break;
-            case SWORD: return false; break;
+            case SWORD: cout << "Ce pion ne vous apartient pas !"; return false; break;
             case KING: isKing = true;
         }
         break;
@@ -309,6 +302,7 @@ bool isValidMovement(const PlayerRole& aPlayer, const Cell aBoard[][BOARD_SIZE_M
     // if the end position is on the path of the selected pawn
     if (!(aEndPos.itsRow == aStartPos.itsRow) && !(aEndPos.itsCol == aStartPos.itsCol))
     {
+        cout << "Position inatteignable !";
         return false;
     }
 
@@ -451,109 +445,23 @@ void movePiece(Cell aBoard[][BOARD_SIZE_MAX], const Position& aStartPos, const P
 
 void capturePieces(const PlayerRole& aPlayer, Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSize, const Position& aEndPos)
 {
-    int row = aEndPos.itsRow;
-    int col = aEndPos.itsCol;
+    // tableau qui stock les quatres coordonées des cases adjacentes a aEndPos
+    int directions[4][2] = {{0,1}, {1,0}, {0,-1}, {-1,0}};
+    Cell actualCell = aBoard[aEndPos.itsRow][aEndPos.itsCol];
 
-    Position northPos, eastPos, southPos, westPos;
-    northPos.itsRow = row-1;
-    northPos.itsCol = col;
-    eastPos.itsRow = row;
-    eastPos.itsCol = col+1;
-    southPos.itsRow = row+1;
-    southPos.itsCol = col;
-    westPos.itsRow = row;
-    westPos.itsCol = col-1;
-
-    Cell& northCell = aBoard[northPos.itsRow][northPos.itsCol];
-    Cell& eastCell = aBoard[eastPos.itsRow][eastPos.itsCol];
-    Cell& southCell = aBoard[southPos.itsRow][southPos.itsCol];
-    Cell& westCell = aBoard[westPos.itsRow][westPos.itsCol];
-
-    const int POSTAB_SIZE = 4;
-    Position posTab[POSTAB_SIZE] = {northPos, eastPos, southPos, westPos};
-    //Cell cellTab[POSTAB_SIZE] = {northCell, eastCell, southCell, westCell};
-
-    char cape = ' ';
-
-    PieceType opponent;
-    bool isKingOpponent = false;
-    switch (aPlayer)
+    // vérification de la capture potentielle sur les quatres cellules
+    for (auto& dir : directions)
     {
-    case ATTACK: opponent = SHIELD; isKingOpponent = true; break;
-    case DEFENSE: opponent = SWORD; break;
-    }
+        int currentRow = aEndPos.itsRow + dir[0];
+        int currentCol = aEndPos.itsCol + dir[1];
 
-    for (int i = 0; i < POSTAB_SIZE; i++)
-    {
-        if ((posTab[i].itsRow == northPos.itsRow && posTab[i].itsCol == northPos.itsCol) && northCell.itsPieceType == opponent)
-            cape = 'N';
-        else if ((posTab[i].itsRow == eastPos.itsRow && posTab[i].itsCol == eastPos.itsCol) && eastCell.itsPieceType == opponent)
-            cape = 'E';
-        else if ((posTab[i].itsRow == southPos.itsRow && posTab[i].itsCol == southPos.itsCol) && southCell.itsPieceType == opponent)
-            cape = 'S';
-        else if ((posTab[i].itsRow == westPos.itsRow && posTab[i].itsCol == westPos.itsCol) && westCell.itsPieceType == opponent)
-            cape = 'W';
+        Cell checkToDelete = aBoard[currentRow + dir[0]][currentCol + dir[1]];
 
-        switch (aPlayer)
+        if (checkToDelete.itsPieceType == actualCell.itsPieceType || (checkToDelete.itsCellType == CASTLE && checkToDelete.itsPieceType != KING) || checkToDelete.itsCellType == FORTRESS || (checkToDelete.itsPieceType == KING && aPlayer == DEFENSE) || (actualCell.itsPieceType == KING && checkToDelete.itsPieceType == SHIELD))
         {
-        case ATTACK:
-            switch (cape)
-            {
-            case 'N':
-                if ((!(aBoard[aEndPos.itsRow - 2][aEndPos.itsCol].itsPieceType == opponent) ||
-                     aBoard[aEndPos.itsRow - 2][aEndPos.itsCol].itsCellType == CASTLE ||
-                     aBoard[aEndPos.itsRow - 2][aEndPos.itsCol].itsCellType == FORTRESS) && isKingOpponent)
-                    northCell.itsPieceType = NONE;
-            case 'E':
-                if ((!(aBoard[aEndPos.itsRow][aEndPos.itsCol + 2].itsPieceType == opponent) ||
-                     aBoard[aEndPos.itsRow][aEndPos.itsCol + 2].itsCellType == CASTLE ||
-                     aBoard[aEndPos.itsRow][aEndPos.itsCol + 2].itsCellType == FORTRESS) && isKingOpponent)
-                    eastCell.itsPieceType = NONE;
-            case 'S':
-                if ((!(aBoard[aEndPos.itsRow + 2][aEndPos.itsCol].itsPieceType == opponent) ||
-                     aBoard[aEndPos.itsRow + 2][aEndPos.itsCol].itsCellType == CASTLE ||
-                     aBoard[aEndPos.itsRow + 2][aEndPos.itsCol].itsCellType == FORTRESS) && isKingOpponent)
-                    southCell.itsPieceType = NONE;
-            case 'W':
-                if ((!(aBoard[aEndPos.itsRow][aEndPos.itsCol - 2].itsPieceType == opponent) ||
-                     aBoard[aEndPos.itsRow][aEndPos.itsCol - 2].itsCellType == CASTLE ||
-                     aBoard[aEndPos.itsRow][aEndPos.itsCol - 2].itsCellType == FORTRESS) && isKingOpponent)
-                    westCell.itsPieceType = NONE;
-            }
-            break;
-        case DEFENSE:
-            switch (cape)
-            {
-            case 'N':
-                if (!(aBoard[aEndPos.itsRow - 2][aEndPos.itsCol].itsPieceType == opponent) ||
-                    aBoard[aEndPos.itsRow - 2][aEndPos.itsCol].itsPieceType == KING ||
-                    aBoard[aEndPos.itsRow - 2][aEndPos.itsCol].itsCellType == CASTLE ||
-                    aBoard[aEndPos.itsRow - 2][aEndPos.itsCol].itsCellType == FORTRESS)
-                    northCell.itsPieceType = NONE;
-            case 'E':
-                if (!(aBoard[aEndPos.itsRow][aEndPos.itsCol + 2].itsPieceType == opponent) ||
-                    aBoard[aEndPos.itsRow][aEndPos.itsCol + 2].itsPieceType == KING ||
-                    aBoard[aEndPos.itsRow][aEndPos.itsCol + 2].itsCellType == CASTLE ||
-                    aBoard[aEndPos.itsRow][aEndPos.itsCol + 2].itsCellType == FORTRESS)
-                    eastCell.itsPieceType = NONE;
-            case 'S':
-                if (!(aBoard[aEndPos.itsRow + 2][aEndPos.itsCol].itsPieceType == opponent) ||
-                    aBoard[aEndPos.itsRow + 2][aEndPos.itsCol].itsPieceType == KING ||
-                    aBoard[aEndPos.itsRow + 2][aEndPos.itsCol].itsCellType == CASTLE ||
-                    aBoard[aEndPos.itsRow + 2][aEndPos.itsCol].itsCellType == FORTRESS)
-                    southCell.itsPieceType = NONE;
-            case 'W':
-                if (!(aBoard[aEndPos.itsRow][aEndPos.itsCol - 2].itsPieceType == opponent) ||
-                    aBoard[aEndPos.itsRow][aEndPos.itsCol - 2].itsPieceType == KING ||
-                    aBoard[aEndPos.itsRow][aEndPos.itsCol - 2].itsCellType == CASTLE ||
-                    aBoard[aEndPos.itsRow][aEndPos.itsCol - 2].itsCellType == FORTRESS)
-                    westCell.itsPieceType = NONE;
-                break;
-            }
-            break;
+            aBoard[currentRow][currentCol].itsPieceType = NONE;
         }
     }
-
 }
 
 bool isSwordLeft(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSize)

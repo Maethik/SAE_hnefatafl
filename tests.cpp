@@ -1242,7 +1242,8 @@ void test_capturePieces()
         failed++;
     }
 
-    cout << "DEFENSE move SHIELD in F6 to F1" << endl;
+    displayBoard(b, LITTLE);
+    cout << "DEFENSE move SHIELD in F6 to F2" << endl;
     movePiece(b,{5,5},{5,1});
     capturePieces(DEFENSE, b, LITTLE, {5,1});
     displayBoard(b, LITTLE);
