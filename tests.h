@@ -22,6 +22,8 @@
 #ifndef TESTS_H
 #define TESTS_H
 
+void resetBoard(Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSize);
+
 /**
  * @brief Test function for the chooseSizeBoard function.
  *

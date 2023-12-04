@@ -15,6 +15,7 @@ determination.
 #include "typeDef.h"
 #include "functions.cpp"
 #include "tests.h"
+#include "scenario.h"
 
 using namespace std;
 
@@ -34,6 +35,16 @@ void launchTests()
     test_isKingEscaped();
     test_isKingCaptured();
     cout << endl << "********** End testing **********" << endl << endl;
+}
+
+void launchScenarios()
+{
+
+    while (!kingEscapedScenario())
+    {
+        cout << endl;
+    }
+    cout << "La partie est finit" << endl;
 }
 
 void playGame()
@@ -86,7 +97,9 @@ void playGame()
 int main()
 {
     // Uncomment the line below to run tests
-    launchTests();
+    //launchTests();
+    // Launch scenarios
+    launchScenarios();
     // Start the game
     //playGame();
 

@@ -21,8 +21,8 @@ using namespace std;
 
 void clearConsole()
 {
-    #ifdef __WIN32__
-       system("clear");
+    #ifdef __WIN32
+       system("cls");
     #elif __APPLE__
        system("clear");
     #elif __linux__
@@ -129,6 +129,7 @@ void displayBoard(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSi
     cout << "S: Sword" << endl;
     cout << "A: Shield" << endl << endl;
 
+    // display the top border
     if (aBoardSize == LITTLE)
     {
         cout << "     1   2   3   4   5   6   7   8   9  10  11" << endl;
@@ -139,6 +140,7 @@ void displayBoard(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSi
         cout << "   +---+---+---+---+---+---+---+---+---+---+---+---+---+" << endl;
     }
 
+    // display the board according the initializeBoard function
     for (int row = 0; row < aBoardSize; row++)
     {
         char letter = 'A' + row;
@@ -172,6 +174,7 @@ void displayBoard(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSi
             }
         }
 
+        // display  the bottom border
         switch (aBoardSize)
         {
         case LITTLE: cout << endl << LITTLEBORDER << endl; break;
@@ -255,6 +258,7 @@ Position getPositionFromInput()
 
 bool isValidPosition(const Position& aPos, const BoardSize& aBoardSize)
 {
+    // check if the position is on the board
     if ((aPos.itsRow >= 0 && aPos.itsRow < aBoardSize) && (aPos.itsCol >= 0 && aPos.itsCol < aBoardSize))
         return true;
     else
@@ -266,12 +270,11 @@ bool isValidPosition(const Position& aPos, const BoardSize& aBoardSize)
 
 bool isEmptyCell(const Cell aBoard[][BOARD_SIZE_MAX], const Position& aPos)
 {
+    // check if the cell is empty
     if (aBoard[aPos.itsRow][aPos.itsCol].itsPieceType == NONE)
         return true;
     else
-    {
         return false;
-    }
 }
 
 bool isValidMovement(const PlayerRole& aPlayer, const Cell aBoard[][BOARD_SIZE_MAX],const Position& aStartPos,const Position& aEndPos)
@@ -445,11 +448,11 @@ void movePiece(Cell aBoard[][BOARD_SIZE_MAX], const Position& aStartPos, const P
 
 void capturePieces(const PlayerRole& aPlayer, Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSize, const Position& aEndPos)
 {
-    // tableau qui stock les quatres coordonées des cases adjacentes a aEndPos
+    // array storing the four coordinates of the cells adjacent to aEndPos
     int directions[4][2] = {{0,1}, {1,0}, {0,-1}, {-1,0}};
     Cell actualCell = aBoard[aEndPos.itsRow][aEndPos.itsCol];
 
-    // vérification de la capture potentielle sur les quatres cellules
+    // check for potential capture on the four cells
     for (auto& dir : directions)
     {
         int currentRow = aEndPos.itsRow + dir[0];
@@ -457,6 +460,11 @@ void capturePieces(const PlayerRole& aPlayer, Cell aBoard[][BOARD_SIZE_MAX], con
 
         Cell checkToDelete = aBoard[currentRow + dir[0]][currentCol + dir[1]];
 
+        // checks whether the cell two cells away contains the same piece as aEndPos,
+        // if it is a castle but does not contain a king,
+        // if it is a fortress,
+        // if it contains a king and the player is DEFENDED,
+        // if it contains a SHIELD and the current square contains a king
         if (checkToDelete.itsPieceType == actualCell.itsPieceType || (checkToDelete.itsCellType == CASTLE && checkToDelete.itsPieceType != KING) || checkToDelete.itsCellType == FORTRESS || (checkToDelete.itsPieceType == KING && aPlayer == DEFENSE) || (actualCell.itsPieceType == KING && checkToDelete.itsPieceType == SHIELD))
         {
             aBoard[currentRow][currentCol].itsPieceType = NONE;
@@ -466,6 +474,7 @@ void capturePieces(const PlayerRole& aPlayer, Cell aBoard[][BOARD_SIZE_MAX], con
 
 bool isSwordLeft(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSize)
 {
+    // go through the board until you find a SWORD piece
     for (int row = 0; row < aBoardSize; row++)
     {
         for (int col = 0; col < aBoardSize; col++)
@@ -479,11 +488,13 @@ bool isSwordLeft(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSiz
 
 Position getKingPosition(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSize)
 {
+    // go through the board until you find the king piece
     Position kingPos;
     for (int row = 0; row < aBoardSize; row++)
     {
         for (int col = 0; col < aBoardSize; col++)
         {
+            // if the king is here, we initialise kingPos at this position and turn it over
             if (aBoard[row][col].itsPieceType == KING)
             {
                 kingPos.itsRow = row;
@@ -492,6 +503,7 @@ Position getKingPosition(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& a
             }
         }
     }
+    // otherwise, we return the default position
     kingPos.itsRow = -1;
     kingPos.itsCol = -1;
     return kingPos;
@@ -499,6 +511,7 @@ Position getKingPosition(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& a
 
 bool isKingEscaped(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoardSize)
 {
+    // we check if the king is on a fortress, if so we return true, if not we return false
     Position kingPos = getKingPosition(aBoard, aBoardSize);
     if (aBoard[kingPos.itsRow][kingPos.itsCol].itsCellType == FORTRESS)
         return true;
@@ -510,6 +523,7 @@ bool isKingCaptured(const Cell aBoard[][BOARD_SIZE_MAX], const BoardSize& aBoard
     bool north = false, east = false, south = false, west = false;
     Position kingPos = getKingPosition(aBoard, aBoardSize);
 
+    // we check the capture conditions for the four sides
     if (aBoard[kingPos.itsRow - 1][kingPos.itsCol].itsPieceType == SWORD ||
         aBoard[kingPos.itsRow - 1][kingPos.itsCol].itsCellType == CASTLE ||
         aBoard[kingPos.itsRow - 1][kingPos.itsCol].itsCellType == FORTRESS ||
